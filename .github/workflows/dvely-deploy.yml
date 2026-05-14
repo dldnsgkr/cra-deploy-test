@@ -33,21 +33,27 @@ jobs:
             echo "base=/${REPO}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Configure CRA homepage
+        run: |
+          BASE="${{ steps.base.outputs.path }}"
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.homepage='$BASE';fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
+          echo "package.json homepage 설정 완료: $BASE"
+
       - name: Install dependencies
         run: npm install
 
       - name: Build
-        run: npx vite build --base=${{ steps.base.outputs.path }}
+        run: npm run build
         env:
           BASE_PATH: ${{ steps.base.outputs.path }}
           PUBLIC_URL: ${{ steps.base.outputs.path }}
 
       - name: Copy index.html to 404.html
         run: |
-          [ -f ./dist/index.html ] && cp ./dist/index.html ./dist/404.html || true
+          [ -f ./build/index.html ] && cp ./build/index.html ./build/404.html || true
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./build
