@@ -1,0 +1,53 @@
+name: Dvely Deploy to GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Resolve base path
+        id: base
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          OWNER="${{ github.repository_owner }}"
+          if [ "$REPO" = "${OWNER}.github.io" ]; then
+            echo "path=/" >> $GITHUB_OUTPUT
+            echo "base=" >> $GITHUB_OUTPUT
+          else
+            echo "path=/${REPO}/" >> $GITHUB_OUTPUT
+            echo "base=/${REPO}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npx vite build --base=${{ steps.base.outputs.path }}
+        env:
+          BASE_PATH: ${{ steps.base.outputs.path }}
+          PUBLIC_URL: ${{ steps.base.outputs.path }}
+
+      - name: Copy index.html to 404.html
+        run: |
+          [ -f ./dist/index.html ] && cp ./dist/index.html ./dist/404.html || true
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
