@@ -5,6 +5,7 @@ function AIPage() {
   return (
     <div className="AIPage">
       <h1>Why Use AI in Our Project?</h1>
+      <h2>Lee UnHak</h2>
       <section>
         <h2>Advantages of AI</h2>
         <ul>
