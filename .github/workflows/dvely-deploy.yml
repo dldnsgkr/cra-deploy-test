@@ -52,6 +52,24 @@ jobs:
         run: |
           [ -f ./build/index.html ] && cp ./build/index.html ./build/404.html || true
 
+      - name: Preserve custom domain
+        run: |
+          mkdir -p ./build
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            if git fetch origin gh-pages --depth=1; then
+              if git show FETCH_HEAD:CNAME > /tmp/dvely-cname 2>/dev/null; then
+                cp /tmp/dvely-cname ./build/CNAME
+                echo "기존 CNAME 파일 보존 완료"
+              else
+                echo "기존 CNAME 파일 없음"
+              fi
+            else
+              echo "gh-pages 브랜치 fetch 실패"
+            fi
+          else
+            echo "gh-pages 브랜치 없음"
+          fi
+
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
